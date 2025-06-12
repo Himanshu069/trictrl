@@ -22,7 +22,7 @@ def f(y,t):
     
     return [theta_dot, theta_dot_dot, phi_dot, phi_dot_dot]
 
-def simulation(y_initial,f):
+def simulation(y_initial,f,stop_angle):
     
     t_start = 0.0
     t_end = 10.0
@@ -37,6 +37,8 @@ def simulation(y_initial,f):
     y = y_initial
     
     for t in time:
+        if y[0] >= stop_angle or y[0] <= - stop_angle:
+            break
         theta_values.append(y[0])
         theta_dot_values.append(y[1])
         phi_values.append(y[2])
@@ -50,8 +52,9 @@ def visualization(y_initial):
     
     side_length = 2  
     height = (np.sqrt(3) / 2) * side_length 
-    
-    angles,_,phi_values,_ = simulation(y_initial,f)
+    stop_angle = np.arctan2(height, side_length / 2)  # Maximum rotation
+
+    angles,_,phi_values,_ = simulation(y_initial,f, stop_angle)
     
     x1 = -side_length * np.cos(math.pi / 3)
     y1 = side_length * np.sin(math.pi / 3)
@@ -72,7 +75,6 @@ def visualization(y_initial):
     circle_radius = 0.3  # Radius of the small rotating circle
 
 
-    stop_angle = np.arctan2(height, side_length / 2)  # Maximum rotation
 
     fig, ax = plt.subplots()
     plt.axhline(y=0, color='black', linewidth=2)
@@ -120,18 +122,19 @@ def visualization(y_initial):
         
         return polygon,circle,dash_line
     Writer = animation.writers['ffmpeg']
-    writer = Writer(fps=25, metadata=dict(artist='Himanshu'), bitrate=1800)
+    writer = Writer(fps=100, metadata=dict(artist='Himanshu'), bitrate=1800)
     
     ani = animation.FuncAnimation(fig, update, frames=len(angles), interval=40, blit=True)
     
-    ani.save('triangle.mp4', writer=writer)
+    ani.save('results/triangle_unforced_system.mp4', writer=writer)
 
     plt.show()
     
 if __name__ == "__main__":
-    theta = -math.pi/6
-    theta_dot = 3
+    theta = + math.pi/18
+    theta_dot = 0
     phi = 0.0
-    phi_dot = 50
+    phi_dot = 1000
     y_initial = [theta, theta_dot, phi, phi_dot]
     visualization(y_initial)
+    
