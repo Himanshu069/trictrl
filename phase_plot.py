@@ -46,8 +46,8 @@ fig2 = plt.figure(figsize=(8, 6))
 THETA, PHI = np.meshgrid(theta_vals, phi_vals)
 DTHETA = np.zeros_like(THETA)
 DPHI = np.zeros_like(PHI)
-print("THETA", THETA)
-print("PHI", PHI)
+# print("THETA", THETA)
+# print("PHI", PHI)
 for i in range(THETA.shape[0]):
     for j in range(PHI.shape[1]):
         dtheta, dtheta_dot, dphi, dphi_dot = reduced_dynamics(THETA[i,j],0.1, PHI[i,j],0.1)
