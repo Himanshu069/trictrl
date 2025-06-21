@@ -194,7 +194,22 @@ Eqn.(\ref{eqn_eomb}) and Eqn.(\ref{eqn_eomw}) are the equations of motion of the
 
 \subsection{First order form}
 \begin{center}
-  TODO
+  \[
+\frac{d}{dt}
+\begin{bmatrix}
+\theta \\
+\dot{\theta} \\
+\phi \\
+\dot{\phi} 
+\end{bmatrix}
+=
+\begin{bmatrix}
+\dot{\theta} \\
+\frac{-\tau_m + \tau_f}{I} + \frac{Mg\sin\theta}{I} \\
+\dot{\phi} \\
+\frac{(\tau_m - \tau_f)(I + I_w)}{IIw} - \frac{Mg \sin\theta}{I}
+\end{bmatrix}
+\]
 \end{center}
 
 \section{Stability analysis and controller design}
@@ -204,12 +219,129 @@ The goal of this section is to design control law for the \textit{Triangle} by u
 The goal of the controller is to regulate $\theta$,  $\dot{\theta}$, and $\dot{\varphi}$ to zero. We're not concerned with $\varphi$ at the moment—that's something for a future project. We will begin by performing mathematical analysis proving why we cannot have smooth single control law which can swing up and balance the \textit{Triangle}. That being done, we are naturally lead to implementing two controllers, one for the swing-up and the next for stabilization. Each of them are discussed in detail. Finally, the question of when to switch from swing-up to stabilization is addressed.
 
 \subsection{A global asymptotic controller}
+Brockett's Law gives the necessary condition for the existence of
+a continuously differentiable control law for non-linear systems. In this 
+case though , we will be intending to disprove that the brockett's conditions
+to show that the a single continuously differentiable time invariant control law 
+doesn't exist.
+\\
+\\
+\textbf{Brockett's Law:}
+Let \( \dot{x} = f(x, u) \) be given, with \( f(x_0, 0) = 0 \), and \( f(\cdot, \cdot) \) continuously differentiable in a neighborhood of \( (x_0, 0) \). A necessary condition for the existence of a continuously differentiable control law which makes \( (x_0, 0) \) asymptotically stable is that:
+\\
+\begin{enumerate}
+    \item The linearized system should have no uncontrollable modes associated with eigenvalues whose real part is positive.
+    
+    \item There exists a neighborhood \( \mathcal{N} \) of \( (x_0, 0) \) such that for each \( \zeta \in \mathcal{N} \), there exists a control \( u_\zeta(\cdot) \) defined on \( [0, \infty) \) such that this control steers the solution of \( \dot{x} = f(x, u_\zeta) \) from \( x = \zeta \) at \( t = 0 \) to \( x = x_0 \) at \( t \to \infty \).
+    
+    \item The mapping \( \gamma : A \times \mathbb{R}^m \to \mathbb{R}^n \), defined by \( \gamma : (x, u) to f(x, u) \), should be onto an open set containing 0 .
+\end{enumerate}
 
-In this section we apply Brockett's condition to check if a single global asymptotic controller can do the job of balancing the \textit{Triangle} from any initial condition.
+Now, for the first condition , starting from the state space/first order form:
 \begin{center}
-  TODO
+  \[
+\frac{d}{dt}
+\begin{bmatrix}
+\theta \\
+\dot{\theta} \\
+\phi \\
+\dot{\phi} 
+\end{bmatrix}
+=
+\begin{bmatrix}
+\dot{\theta} \\
+\frac{-\tau_m + \tau_f}{I} + \frac{Mg\sin\theta}{I} \\
+\dot{\phi} \\
+\frac{(\tau_m - \tau_f)(I + I_w)}{IIw} - \frac{Mg \sin\theta}{I}
+\end{bmatrix}
+\]
 \end{center}
-
+Linearizing this system, we get:
+\begin{center}  
+  \[
+\frac{d}{dt}
+\begin{bmatrix}
+\theta \\
+\dot{\theta} \\
+\phi \\
+\dot{\phi} 
+\end{bmatrix} = 
+\begin{bmatrix}
+0 & 1 & 0 & 0 \\
+\frac{Mg}{I} & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 \\
+\frac{-Mg}{I} & 0 & 0 & 0
+\end{bmatrix}
+\begin{bmatrix}
+\theta \\
+\dot{\theta} \\
+\phi \\
+\dot{\phi}
+\end{bmatrix}
++
+\begin{bmatrix}
+0 \\
+\frac{-1}{I} \\
+0 \\
+\frac{I + I_w}{II_w}
+\end{bmatrix}
+(\tau_m - \tau_f)
+\]
+\end{center}
+Now, the characteristic equation of this system is given by:
+\begin{center}
+\[
+\det(\lambda I - A) = 0
+\]
+Upon Solving this equation, we get four roots as:
+\[
+\lambda = 0, 0, i \sqrt{\frac{Mg}{I}}, -i \sqrt\frac{Mg}{I} 
+\]
+\end{center}
+For determining the uncontrollable nodes, we would need to check controllability and 
+use the Kalman decomposition or compute the PBH (Popov–Belevitch–Hautus) test, but in this case
+since there is no eigenvalue with Real part ,the first condition of Brockett's condition is satisfied.
+\\
+\\
+Moving on, for the third condition of Brockett's condition, we intend to show that the mapping from 
+\( \gamma : (x, u) to f(x, u) \) is not onto an open set containing 0.
+\begin{center}
+\[
+\frac{d}{dt}
+\begin{bmatrix}
+\theta \\
+\dot{\theta} \\
+\phi \\
+\dot{\phi} 
+\end{bmatrix}
+=
+\begin{bmatrix}
+\dot{\theta} \\
+\frac{-\tau_m + \tau_f}{I} + \frac{Mg\sin\theta}{I} \\
+\dot{\phi} \\
+\frac{(\tau_m - \tau_f)(I + I_w)}{IIw} - \frac{Mg \sin\theta}{I}
+\end{bmatrix}
+=
+\begin{bmatrix}
+f_1\\
+f_2\\
+f_3\\
+f_4
+\end{bmatrix}
+(say)
+\]
+\end{center}
+Now, taking the sum of the second and the third term:
+\[
+f_2 + f_4 = -\frac{-\tau_m + \tau_f}{I} + \frac{Mg\sin{\theta}}{I} + \frac{(\tau_m - \tau_f)(I + I_w)}{II_w}- \frac{Mg\sin{\theta}}{I}
+\]
+Simplifying this equation, we get:
+\[
+f_2 + f_4 = \frac{\tau_m - \tau_f}{I_w}s
+\]
+This shows that \(f_2 \) and \(f_4\) can only appear in pair due to them having to satisfy the above sum condition.
+Hence, the co-domain of the function is not equal to the range and the function is not onto which is a clear case of 
+violation of the Brockett's necessary condition and thus a single continuously differentiable control law cannot stabilize the system.
 \subsection{Stabilizer}
 
 \subsubsection*{Lyapunov function}

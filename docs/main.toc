@@ -1,0 +1,11 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {section}{\numberline {2}Differential equations the \textit {Triangle}}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Construction of the Lagrangian}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Equations of motion}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}First order form}{6}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Stability analysis and controller design}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}A global asymptotic controller}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Stabilizer}{7}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Swing-up controller}{9}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Determination of the wheel's speed for swing-up}{10}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}Determination of switching thresholds}{11}{subsubsection.3.3.2}%
