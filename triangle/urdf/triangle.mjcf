@@ -1,0 +1,73 @@
+<mujoco model="triangle">
+  <default>
+    <default class="robot">
+      <default class="motor">
+        <joint />
+        <motor />
+      </default>
+      <default class="visual">
+        <geom material="visualgeom" contype="0" conaffinity="0" group="2" />
+      </default>
+      <default class="collision">
+        <geom material="collision_material" condim="3" contype="0" conaffinity="1" priority="1" group="1" solref="0.005 1" friction="1 0.01 0.01" />
+        <equality solimp="0.99 0.999 1e-05" solref="0.005 1" />
+      </default>
+    </default>
+  </default>
+
+  <compiler angle="radian" />
+
+  <asset>
+    <texture name="grid" type="2d" builtin="checker" width="128" height="128" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+    <material name="gray_material" rgba="0.75294 0.75294 0.75294 1" />
+    <material name="default_material" rgba="0.7 0.7 0.7 1" />
+    <material name="collision_material" rgba="1.0 0.28 0.1 0.9" />
+    <material name="reaction_wheel" rgba="1.0 0.84 0.2 1" />
+    <mesh name="base_link.STL" file="meshes/base_link.STL" />
+    <mesh name="reaction_wheel.STL" file="meshes/reaction_wheel.STL" />
+  </asset>
+
+  <worldbody>
+
+  <light diffuse=".5 .5 .5" pos="0 0 10" dir="0 0 -1"/>
+  <geom type="plane" size="2 2 0.1" material="grid"/>
+
+    <body name="base_link" pos="0 0 0.1" quat="1 0 0 0" childclass="robot">
+      <freejoint name="floating_base" />
+      <geom name="base_link_collision" pos="0 0 0" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="base_link.STL" class="collision" material="gray_material" />
+      <geom name="base_link_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="gray_material" type="mesh" mesh="base_link.STL" class="visual" />
+        <body name="reaction_wheel" pos="0 0 0" quat="0.7071054825112363 -0.7071080798594735 0.0 0.0">          <joint name="reaction_wheel_joint" type="hinge" pos="0 0 0" class="motor" damping="0.05" range="-1.0472 1.0472" axis="0 0 1" />
+          <inertial pos="0.051515 0.019631 0.060459" quat="1.0 0.0 0.0 0.0" mass="0.058143" diaginertia="1.3156e-05 1.2981e-05 1.5356e-05" />
+          <geom name="reaction_wheel_collision" pos="0 0 0" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="reaction_wheel.STL" class="collision" material="reaction_wheel" />
+          <geom name="reaction_wheel_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="reaction_wheel" type="mesh" mesh="reaction_wheel.STL" class="visual" />
+       </body>
+      <site name="base_link_site" pos="0 0 0" quat="1 0 0 0" />
+      <camera name="front_camera" mode="track" fovy="90.0" quat="4.329780281177467e-17 4.329780281177466e-17 0.7071067811865475 0.7071067811865476" pos="0.0 2.0 0.5" />
+      <camera name="side_camera" mode="track" fovy="90.0" quat="-0.5 -0.4999999999999999 0.5 0.5000000000000001" pos="-2.0 0.0 0.5" /> 
+     
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="reaction_wheel_joint_ctrl" joint="reaction_wheel_joint" class="motor" />
+  </actuator>
+
+  <contact>
+    <exclude body1="base_link" body2="reaction_wheel" />
+  </contact>
+
+  <sensor>
+    <framepos name="base_link_site_pos" objtype="site" objname="base_link_site" />
+    <framequat name="base_link_site_quat" objtype="site" objname="base_link_site" />
+    <framelinvel name="base_link_site_linvel" objtype="site" objname="base_link_site" />
+    <frameangvel name="base_link_site_angvel" objtype="site" objname="base_link_site" />
+    <velocimeter name="base_link_site_vel" site="base_link_site" />
+  </sensor>
+</mujoco>
+
+
+
+
+<!-- Changed Lines: -->
+<!-- <body name="reaction_wheel" pos="0 0 0" quat="0.7071054825112363 -0.7071080798594735 0.0 0.0"> -->
