@@ -1,3 +1,8 @@
 {
-    "ros.distro": "jazzy"
+    "ros.distro": "jazzy",
+    "files.associations": {
+        "cstdint": "c",
+        "stdio.h": "c",
+        "stm32f1xx_hal.h": "c"
+    }
 }

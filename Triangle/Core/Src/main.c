@@ -19,17 +19,16 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
-#include "i2c.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "app.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h> 
-#include "mpu6050.h"  
+#include <mpu_6050.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,9 +60,12 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-volatile encoder = 0; 
-
-
+uint32_t encoder = 0 ; 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+#define ENCODER_CPR 400
+float get_motor_speed(void);
 /* USER CODE END 0 */
 
 /**
@@ -74,7 +76,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  setup();
+  // setup();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -96,31 +98,46 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_TIM2_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
-  MX_I2C1_Init();
   MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
-
-
+  HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+  MPU6050_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  char buf[32];
-
+  // char buf[32];
+  char buffer[100];
+  float accel[3], gyro[3]; 
   while (1)
   {
       // HAL_UART_Transmit(&huart2, (uint8_t *)msg, sizeof(msg), 1000);
-    //  encoder = __HAL_TIM_GET_COUNTER(&htim2);    
-      encoder = htim2.Instance->CNT;
+      encoder = __HAL_TIM_GET_COUNTER(&htim4);    
+      // int len = sprintf(buf, "Received Value: %lu\r\n", encoder); 
+      // HAL_UART_Transmit(&huart1, (uint8_t *)buf, len, 1000);
 
-      int len = sprintf(buf, "%lu\r\n", encoder); 
-      HAL_UART_Transmit(&huart1, (uint8_t *)buf, len, 1000);
+      MPU6050_ReadData(accel, gyro);
 
+      // sprintf(buffer, "AX:%f AY:%f AZ:%f GX:%f GY:%f GZ:%f\r\n",
+      //           accel[0], accel[1], accel[2],
+      //           gyro[0], gyro[1], gyro[2]);
+      
+      uint8_t id = MPU6050_ReadByte(0x75);
+      sprintf(buffer, "WHO_AM_I = 0x%02X\r\n", id);
+      HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+      float gx_rad = gyro[0] * (M_PI / 180.0f);
+      float theta = atan2(accel[1],accel[2]) * 180.0f / M_PI ;
+      float phi = encoder * 2.0f * M_PI/ENCODER_CPR;
+      float phi_dot = get_motor_speed();
+      sprintf(buffer, "AX:%d AY:%d AZ:%d GX:%d GY:%d GZ:%d theta : %f thetadot: %f phi : %f phi_dot : %f\r\n",
+            (int)(accel[0]*1000), (int)(accel[1]*1000), (int)(accel[2]*1000),
+            (int)(gyro[0]*100), (int)(gyro[1]*100), (int)(gyro[2]*100), theta, gx_rad, phi, phi_dot) ;
+      HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
       HAL_Delay(10);  
+      // encoder = __HAL_TIM_GET_COUNTER(&htim2);
 
     /* USER CODE END WHILE */
 
@@ -169,7 +186,19 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+float get_motor_speed() {
+    static int32_t prev_count = 0;
+    static uint32_t prev_time = 0;   
+    int32_t count = __HAL_TIM_GET_COUNTER(&htim4);
+    int32_t delta = count - prev_count;
+    prev_count = count;
 
+    uint32_t now_time = HAL_GetTick(); 
+    float dt = (now_time - prev_time) / 1000.0f;  
+    prev_time = now_time;
+
+    return ((float)delta / ENCODER_CPR) * 2.0f * M_PI / dt; // rad/s
+}
 /* USER CODE END 4 */
 
 /**
