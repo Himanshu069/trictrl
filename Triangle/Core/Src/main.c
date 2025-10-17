@@ -61,11 +61,14 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint32_t encoder = 0 ; 
+float phi_dot = 0.0f;
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 #define ENCODER_CPR 400
+uint16_t motor_duty =  0;
 float get_motor_speed(void);
+volatile float motor_speed_rpm;
 /* USER CODE END 0 */
 
 /**
@@ -100,18 +103,21 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
-  MX_TIM3_Init();
   MX_TIM4_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
   MPU6050_Init();
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   // char buf[32];
-  char buffer[100];
+  char buffer[512];
   float accel[3], gyro[3]; 
+  motor_duty = 0.5;
+
   while (1)
   {
       // HAL_UART_Transmit(&huart2, (uint8_t *)msg, sizeof(msg), 1000);
@@ -131,11 +137,13 @@ int main(void)
       float gx_rad = gyro[0] * (M_PI / 180.0f);
       float theta = atan2(accel[1],accel[2]) * 180.0f / M_PI ;
       float phi = encoder * 2.0f * M_PI/ENCODER_CPR;
-      float phi_dot = get_motor_speed();
-      sprintf(buffer, "AX:%d AY:%d AZ:%d GX:%d GY:%d GZ:%d theta : %f thetadot: %f phi : %f phi_dot : %f\r\n",
+      phi_dot = get_motor_speed();
+      snprintf(buffer, sizeof(buffer),
+            "AX:%d AY:%d AZ:%d GX:%d GY:%d GZ:%d theta : %f thetadot: %f phi : %f phi_dot : %f\r\n",
             (int)(accel[0]*1000), (int)(accel[1]*1000), (int)(accel[2]*1000),
             (int)(gyro[0]*100), (int)(gyro[1]*100), (int)(gyro[2]*100), theta, gx_rad, phi, phi_dot) ;
       HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+      htim1.Instance->CCR1 = (uint32_t)(motor_duty * htim1.Instance->ARR);     
       HAL_Delay(10);  
       // encoder = __HAL_TIM_GET_COUNTER(&htim2);
 
