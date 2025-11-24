@@ -10,7 +10,7 @@ Design and implementation of control systems for a Triangle Balance Robot in the
 
 Imitation Learning for RWP using dataset from NMPC generated trajectories
 
-![triangle](https://github.com/user-attachments/assets/5be13ce5-3825-4c61-a9ea-696648546299)
+![trictrl](https://github.com/user-attachments/assets/b6b0ac96-a3eb-44fc-b04e-438e15de4053)
 
 
 
