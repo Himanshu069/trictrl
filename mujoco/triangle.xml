@@ -1,0 +1,41 @@
+<mujoco model="triangle">
+  <compiler angle="radian"/>
+
+  <!-- simulation options -->
+  <option gravity="0 0 -9.81" timestep="0.001"/>
+  
+  <asset>
+    <mesh name="base_link" file="base_link.STL"/>
+    <mesh name="Empty_Link" file="Empty_Link.STL"/>
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+  </asset>
+
+  <worldbody>
+    <geom name="floor" type="plane" size="1 1 0.1" material="grid" />
+
+  <body name="base_link" pos="0 0 0.0025" >
+  <joint type="hinge" axis="0 -1 0" pos="0 0 0"/>    
+  <!-- <joint name="base_hinge" type="hinge" axis="0 1 0" range="-1.57 1.57" pos="0 0 0" /> -->
+    <inertial
+      pos="0 0 0.05"
+      mass="0.286"
+      fullinertia="2.0076e-04 4.370975e-04 4.89043e-04 3.61316e-06 -2.4011e-07 -7.75436e-06"/>
+    <geom type="mesh" mesh="base_link" rgba="0.98431 0.98039 0.96078 1" />
+
+    <body name="Empty_Link" pos="0 0.021 0.04323" quat="-0.5 0.500000 -0.500000 -0.500000">
+      <joint name="Revolute" type="hinge" axis="0 0 1" />
+      <inertial
+        pos="0 0 -0.002"
+        mass="0.079"
+        fullinertia="2.0417e-05 2.0422e-05 4.0394e-05 0.0 0.0 0.0"/>
+      <geom type="mesh" mesh="Empty_Link" rgba="1 1 1 1" />
+    </body>
+  </body>
+  </worldbody>
+
+
+  <actuator>
+    <motor name="revolute_motor" joint="Revolute" ctrlrange="-0.5 0.5" gear="1"/>
+  </actuator>
+</mujoco>

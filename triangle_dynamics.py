@@ -10,15 +10,21 @@ import math
 def f(y,t):    
     
     theta, theta_dot, phi, phi_dot = y
-    tm = 0 #torque motor
+    tm = 0.16 #torque motor
     tf = 0 #torque friction
-    g = 9.81 #gravity
-    M = 2.0 #combined mass
-    I = 1.0 #Combined moment of inertia
-    Iw = 0.1 #moment of inertia of the wheel
-    
+    mb = 0.286
+    mw = 0.079
+    M = 0.01825     #mblb+mwlw
+    Iw = 0.000040394
+    Ib = 0.0004370975
+    lb = 0.05
+    lw = 0.05
+    g = 9.81
+    I = Ib + mb*lb*lb + mw*lw*lw    #moment of inertia of the wheel
+    Iw = 0.000040394
+
     theta_dot_dot = (-tm+tf+M*g*np.sin(theta))/I
-    phi_dot_dot = (tm+tf)*(I+Iw)/(I*Iw) - (M*g*np.sin(theta))/(I)
+    phi_dot_dot = (tm-tf)*(I+Iw)/(I*Iw) - (M*g*np.sin(theta))/(I)
     
     return [theta_dot, theta_dot_dot, phi_dot, phi_dot_dot]
 
@@ -131,7 +137,7 @@ def visualization(y_initial):
     plt.show()
     
 if __name__ == "__main__":
-    theta = + math.pi/18
+    theta = + math.pi/3.5
     theta_dot = 0
     phi = 0.0
     phi_dot = 1000
