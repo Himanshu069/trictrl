@@ -723,13 +723,26 @@ behavior of balancing with the wheel velocity settling to a fixed value but it s
 or negative angles only. This wasn't pursued any further.
 \end{tcolorbox}
 
-\subsection{Behavior Cloning Controller}
+\subsection{Imitation Learning Approaches}
 
-The network maps the current state of the system to a control action by passing the input through two hidden layers of 64 neurons each, 
+\subsubsection*{Behavior Cloning Controller}
+A behavior cloning controller just learns a mapping from states to expert actions by treating control as a supervised learning problem.\\
+For our system, the network maps the current state of the system to a control action by passing the input through two hidden layers of 64 neurons each, 
 using ReLU activations, and outputs a single control value which is based on supervised loss.
 
+\subsubsection*{DAgger Algorithm}
+DAgger (Dataset Aggregation) \cite{dag} tackles the core flaw of basic behavioral cloning: the policy only sees expert states,
+ so it falls apart when its own mistakes push it into unseen regions. DAgger fixes this by repeatedly rolling out the learned policy, 
+ collecting the states it actually visits, and asking the expert to label those states with the correct actions.
+ Each iteration augments the training set with these new expert-labeled samples, gradually covering the full distribution
+  induced by the learned policy rather than the narrow distribution of expert demonstrations.
 
-
+\subsubsection*{Q-loss}
+This is an approach to imitate NMPC as introduced in the paper \cite{Qloss} in which instead of supervised learning from control inputs , the NMPC problem
+is solved for each state/ input to the network while training while introducing a constraint that fixes the first control to the network predicted control 
+and the cost function value is used as the loss and the lagrange multiplier corresponding to the constraint that fixes first control to the network predicted 
+control which happens to be equal to gradient of the cost function with respect to this network predicted first control input is used as the gradient for 
+backpropagation in the neural network. 
 \bibliographystyle{plain}
 \bibliography{references}
 

@@ -6,4 +6,22 @@
 \newblock {\em Elektor Magazine}, May 2016.
 \newblock Digital issue, Elektormagazine.com.
 
+\bibitem{Qloss}
+Andrea Ghezzi, Jasper Hoffman, Jonathan Frey, Joschka Boedecker, and Moritz
+  Diehl.
+\newblock Imitation learning from nonlinear mpc via the exact q-loss and its
+  gauss-newton approximation.
+\newblock In {\em 2023 62nd IEEE Conference on Decision and Control (CDC)},
+  pages 4766--4771, 2023.
+
+\bibitem{dag}
+Stephane Ross, Geoffrey Gordon, and Drew Bagnell.
+\newblock A reduction of imitation learning and structured prediction to
+  no-regret online learning.
+\newblock In Geoffrey Gordon, David Dunson, and Miroslav Dud{\'\i}k, editors,
+  {\em Proceedings of the Fourteenth International Conference on Artificial
+  Intelligence and Statistics}, volume~15 of {\em Proceedings of Machine
+  Learning Research}, pages 627--635, Fort Lauderdale, FL, USA, 11--13 Apr
+  2011. PMLR.
+
 \end{thebibliography}

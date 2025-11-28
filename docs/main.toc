@@ -11,4 +11,4 @@
 \contentsline {subsubsection}{\numberline {3.3.2}Determination of switching thresholds}{12}{subsubsection.3.3.2}%
 \contentsline {section}{\numberline {4}Learning Based Control (Experiments)}{13}{section.4}%
 \contentsline {subsection}{\numberline {4.1}Data Generation from NMPC}{13}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Behavior Cloning Controller}{14}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.2}Imitation Learning Approaches}{15}{subsection.4.2}%
