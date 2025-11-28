@@ -236,49 +236,49 @@ Let \( \dot{x} = f(x, u) \) be given, with \( f(x_0, 0) = 0 \), and \( f(\cdot, 
 \begin{enumerate}
     \item The linearized system should have no uncontrollable modes associated with eigenvalues whose real part is positive.
     
-\begin{tcolorbox}[colback=gray!10, colframe=gray!50, boxrule=0.5pt, arc=0pt, left=4pt, right=4pt, top=4pt, bottom=4pt]
-This condition means that we must decompose the linearized system into controllable/uncontrollable
-subsystems (e.g. via Kalman decomposition) and only the uncontrollable modes need to be examined.
-If any uncontrollable mode is unsatable, smooth stabilization is not possible. \newline
-Eqn (\ref{firstorderform}) is linearized about the equilibrium state resulting in following linear state space model.
+% \begin{tcolorbox}[colback=gray!10, colframe=gray!50, boxrule=0.5pt, arc=0pt, left=4pt, right=4pt, top=4pt, bottom=4pt]
+% This condition means that we must decompose the linearized system into controllable/uncontrollable
+% subsystems (e.g. via Kalman decomposition) and only the uncontrollable modes need to be examined.
+% If any uncontrollable mode is unsatable, smooth stabilization is not possible. \newline
+% Eqn (\ref{firstorderform}) is linearized about the equilibrium state resulting in following linear state space model.
 
-\begin{center}  
-  \[
-\frac{d}{dt}
-\begin{bmatrix}
-\theta \\
-\dot{\theta} \\
-\phi \\
-\dot{\phi} 
-\end{bmatrix} = 
-\begin{bmatrix}
-0 & 1 & 0 & 0 \\
-\frac{Mg}{I} & 0 & 0 & 0 \\
-0 & 0 & 0 & 1 \\
-\frac{-Mg}{I} & 0 & 0 & 0
-\end{bmatrix}
-\begin{bmatrix}
-\theta \\
-\dot{\theta} \\
-\phi \\
-\dot{\phi}
-\end{bmatrix}
-+
-\begin{bmatrix}
-0 \\
-\frac{-1}{I} \\
-0 \\
-\frac{I + I_w}{II_w}
-\end{bmatrix}
-(\tau_m - \tau_f)
-\]
-\end{center}
+% \begin{center}  
+%   \[
+% \frac{d}{dt}
+% \begin{bmatrix}
+% \theta \\
+% \dot{\theta} \\
+% \phi \\
+% \dot{\phi} 
+% \end{bmatrix} = 
+% \begin{bmatrix}
+% 0 & 1 & 0 & 0 \\
+% \frac{Mg}{I} & 0 & 0 & 0 \\
+% 0 & 0 & 0 & 1 \\
+% \frac{-Mg}{I} & 0 & 0 & 0
+% \end{bmatrix}
+% \begin{bmatrix}
+% \theta \\
+% \dot{\theta} \\
+% \phi \\
+% \dot{\phi}
+% \end{bmatrix}
+% +
+% \begin{bmatrix}
+% 0 \\
+% \frac{-1}{I} \\
+% 0 \\
+% \frac{I + I_w}{II_w}
+% \end{bmatrix}
+% (\tau_m - \tau_f)
+% \]
+% \end{center}
 
-We begin the analysis by checking the controllability of the linearized dynamics. It is very probable
-because one control torque is supposed to regulate four state variables. Controllability can determined
-by the rank of Kalman matrix C.
+% We begin the analysis by checking the controllability of the linearized dynamics. It is very probable
+% because one control torque is supposed to regulate four state variables. Controllability can determined
+% by the rank of Kalman matrix C.
 
-\end{tcolorbox}
+% \end{tcolorbox}
 
 
 
@@ -287,7 +287,7 @@ by the rank of Kalman matrix C.
     
     \item The mapping \( \gamma : A \times \mathbb{R}^m \to \mathbb{R}^n \), defined by \( \gamma : (x, u) \to f(x, u) \), should be onto an open set containing 0 .
 \end{enumerate}
-
+\begin{tcolorbox}[colback=gray!10, colframe=gray!50, boxrule=0.5pt, arc=0pt, left=4pt, right=4pt, top=4pt, bottom=4pt]
 Now, for the first condition , starting from the state space/first order form:
 \begin{center}
   \[
@@ -363,6 +363,9 @@ f_2 + f_4 = \frac{\tau_m - \tau_f}{I_w}
 This shows that \(f_2 \) and \(f_4\) can only appear in pair due to them having to satisfy the above sum condition.
 Hence, the co-domain of the function is not equal to the range and the function is not onto which is a clear case of 
 violation of the Brockett's necessary condition and thus a single continuously differentiable control law cannot stabilize the system.
+
+\end{tcolorbox}
+
 \subsection{Stabilizer}
 
 \subsubsection*{Lyapunov function}
@@ -370,7 +373,7 @@ violation of the Brockett's necessary condition and thus a single continuously d
 Since we are interested only on $\theta$,  $\dot{\theta}$, and $\dot{\varphi}$, we design an energy like Lyapunov function
 
 \begin{equation}
-  V = \frac{1}{2} I \dot{\theta}^2 + MgL (1 - \cos\theta) + \frac{1}{2} k_1 \dot{\varphi}^2, \quad k_1 > 0
+  V = \frac{1}{2} I \dot{\theta}^2 + Mg (- \cos\theta) + \frac{1}{2} k_1 \dot{\varphi}^2, \quad k_1 > 0
 \end{equation}
 
 where the first two terms represents the mechanical energy of robot body. We synthesize the third, wheel damping, term as we are interested in the angular rate of the wheel as well. The term $k_{1}$ represents the magnitude of damping. It should be noted that we do not require custom gains on other terms ($I$, $M$, $g$, and $L$) because they are provided by physics and system parameters.
@@ -378,15 +381,15 @@ where the first two terms represents the mechanical energy of robot body. We syn
 Following the steps of Lyapunov analysis, now we compute the time derivative $V$, and plug in the expressions from the equations of motion Eqn.(\ref{eqn_eomb}) and Eqn.(\ref{eqn_eomw}).
 
 \begin{align}
-  \dot{V} &= I \dot{\theta} \ddot{\theta} + MgL \dot{\theta} \sin\theta + k_1 \dot{\varphi} \ddot{\varphi} \nonumber \\
-          &= \dot{\theta}(2MgL \sin\theta - \tau_m) + k_1 \dot{\varphi}\left(\frac{(I + I_w)}{I I_w}\tau_m - \frac{MgL \sin\theta}{I}\right)
+  \dot{V} &= I \dot{\theta} \ddot{\theta} + Mg \dot{\theta} \sin\theta + k_1 \dot{\varphi} \ddot{\varphi} \nonumber \\
+          &= \dot{\theta}(2Mg \sin\theta - \tau_m) + k_1 \dot{\varphi}\left(\frac{(I + I_w)}{I I_w}\tau_m - \frac{Mg \sin\theta}{I}\right)
   \label{eqn_vdot}
 \end{align}
 
 We now, \textit{search for} the control law forces $\dot{V}$ to be negative semi-definite i.e. $\dot{V}\leq0$.
 
 \begin{equation}
-  \tau_m = 2MgL \sin\theta + k_2 \dot{\theta} - \tau_{f}- k_1 \frac{(I + I_w)}{I I_w} \dot{\varphi}
+  \tau_m = 2Mg \sin\theta + k_2 \dot{\theta} - \tau_{f}- k_1 \frac{(I + I_w)}{I I_w} \dot{\varphi}
   \label{eqn_ctrl}
 \end{equation}
 
@@ -397,7 +400,6 @@ Plugging in the expression of control torque into Eqn.{\ref{eqn_vdot}} to make s
 \end{equation}
 
 When $\dot{V}$ is negative semi-definite, we ask LaSalle for help!
-
 \subsubsection*{LaSalle's invariance principle}
 
 LaSalle's principle requires finding the largest invariant set where $\dot{V} = 0$:
@@ -407,18 +409,18 @@ LaSalle's principle requires finding the largest invariant set where $\dot{V} = 
 
   \item Substituting $\dot{\theta} = \dot{\varphi} = 0$ into \eqref{eqn_eomb} and \eqref{eqn_eomw}:
   \begin{align}
-    0 &= MgL\sin\theta - \tau_m \label{eq:theta_eq} \\
-    0 &= \frac{(I + I_w)\tau_m}{I I_w} - \frac{MgL\sin\theta}{I} \label{eq:phi_eq}
+    0 &= Mg\sin\theta - \tau_m \label{eq:theta_eq} \\
+    0 &= \frac{(I + I_w)\tau_m}{I I_w} - \frac{Mg\sin\theta}{I} \label{eq:phi_eq}
   \end{align}
 
   \item Substituting the control law \eqref{eqn_ctrl} with $\dot{\theta} = \dot{\varphi} = 0$:
   \begin{equation}
-    \tau_m = 2MgL\sin\theta
+    \tau_m = 2Mg\sin\theta
   \end{equation}
 
   \item Combining with \eqref{eq:theta_eq}:
   \begin{equation}
-      MgL\sin\theta = 2MgL\sin\theta \implies \sin\theta = 0
+      Mg\sin\theta = 2Mg\sin\theta \implies \sin\theta = 0
   \end{equation}
 \end{enumerate}
 
@@ -434,7 +436,7 @@ Since $V$ is radially unbounded and the downward position is unstable, all traje
 
 Our controller, in nonlinear form, as expressed in Eqn.(\ref{eqn_ctrl}) is
 \begin{equation*}
-  \tau_m=2MgL\sin\theta+k_{2}\dot{\theta}-\tau_{f}-k_1\frac{(I+I_w)}{II_w}\dot{\varphi}
+  \tau_m=2Mg\sin\theta+k_{2}\dot{\theta}-\tau_{f}-k_1\frac{(I+I_w)}{II_w}\dot{\varphi}
 \end{equation*}
 
 The first term compensates gravity, second damps the robot velocity, third compensates friction, and the last damps the wheel velocity. If we are near the equilibrium angle, then gravity compensation can be considered linear with the approximation $\sin\theta\approx\theta$ which linearizes the control law to be
@@ -447,7 +449,7 @@ This requires us to determine the friction of the motor. However, the classic ac
   \tau_m=k_{p}\theta+k_d\dot{\theta}+k_{w}\dot{\varphi}
 \end{equation}
 
-where, $k_{p}=2MgL$, $k_{d}=k_{2}$, and $k_{w}=-k_{1}(I+I_w)/(II_{w})$.
+where, $k_{p}=2Mg$, $k_{d}=k_{2}$, and $k_{w}=-k_{1}(I+I_w)/(II_{w})$.
 
 \subsection{Swing-up controller}
 
