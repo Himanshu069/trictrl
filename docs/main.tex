@@ -2,7 +2,7 @@
 \usepackage[margin=0.8in]{geometry}
 \usepackage{graphicx}
 \usepackage{amsmath, amssymb, hyperref, bm}
-
+\usepackage{tcolorbox}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.5em}
 
@@ -193,6 +193,7 @@ Plugging the expression in Eqn.(\ref{eqn_tempw}) gives us
 Eqn.(\ref{eqn_eomb}) and Eqn.(\ref{eqn_eomw}) are the equations of motion of the \textit{Triangle}.
 
 \subsection{First order form}
+\label{firstorderform}
 \begin{center}
   \[
 \frac{d}{dt}
@@ -219,44 +220,28 @@ The goal of this section is to design control law for the \textit{Triangle} by u
 The goal of the controller is to regulate $\theta$,  $\dot{\theta}$, and $\dot{\varphi}$ to zero. We're not concerned with $\varphi$ at the moment—that's something for a future project. We will begin by performing mathematical analysis proving why we cannot have smooth single control law which can swing up and balance the \textit{Triangle}. That being done, we are naturally lead to implementing two controllers, one for the swing-up and the next for stabilization. Each of them are discussed in detail. Finally, the question of when to switch from swing-up to stabilization is addressed.
 
 \subsection{A global asymptotic controller}
-Brockett's Law gives the necessary condition for the existence of
-a continuously differentiable control law for non-linear systems. In this 
-case though , we will be intending to disprove that the brockett's conditions
-to show that the a single continuously differentiable time invariant control law 
-doesn't exist.
+Brockett’s Law provides the necessary condition for the existence of a continuously differentiable control law for
+nonlinear systems. In this case, however, we attempt to disprove Brockett’s condition to show that a single
+continuously differentiable time invariant control law does not exist. This leads to the popular conclusion that two
+controllers are needed—one for swing-up and the other for stabilization.
+It should be noted that a single continuous controller cannot accomplish both tasks, but if the controller is a
+discontinuous function, it might. Therefore, our approach is more like: “We are acquainted with continuous control
+design techniques. First, we will check if this can be done. If not, we will settle for two different controllers, one
+for swing-up and the other for stabilization.”
 \\
 \\
-\textbf{Brockett's Law:}
+\textbf{Brockett’s conditions}
 Let \( \dot{x} = f(x, u) \) be given, with \( f(x_0, 0) = 0 \), and \( f(\cdot, \cdot) \) continuously differentiable in a neighborhood of \( (x_0, 0) \). A necessary condition for the existence of a continuously differentiable control law which makes \( (x_0, 0) \) asymptotically stable is that:
 \\
 \begin{enumerate}
     \item The linearized system should have no uncontrollable modes associated with eigenvalues whose real part is positive.
     
-    \item There exists a neighborhood \( \mathcal{N} \) of \( (x_0, 0) \) such that for each \( \zeta \in \mathcal{N} \), there exists a control \( u_\zeta(\cdot) \) defined on \( [0, \infty) \) such that this control steers the solution of \( \dot{x} = f(x, u_\zeta) \) from \( x = \zeta \) at \( t = 0 \) to \( x = x_0 \) at \( t \to \infty \).
-    
-    \item The mapping \( \gamma : A \times \mathbb{R}^m \to \mathbb{R}^n \), defined by \( \gamma : (x, u) \to f(x, u) \), should be onto an open set containing 0 .
-\end{enumerate}
+\begin{tcolorbox}[colback=gray!10, colframe=gray!50, boxrule=0.5pt, arc=0pt, left=4pt, right=4pt, top=4pt, bottom=4pt]
+This condition means that we must decompose the linearized system into controllable/uncontrollable
+subsystems (e.g. via Kalman decomposition) and only the uncontrollable modes need to be examined.
+If any uncontrollable mode is unsatable, smooth stabilization is not possible. \newline
+Eqn (\ref{firstorderform}) is linearized about the equilibrium state resulting in following linear state space model.
 
-Now, for the first condition , starting from the state space/first order form:
-\begin{center}
-  \[
-\frac{d}{dt}
-\begin{bmatrix}
-\theta \\
-\dot{\theta} \\
-\phi \\
-\dot{\phi} 
-\end{bmatrix}
-=
-\begin{bmatrix}
-\dot{\theta} \\
-\frac{-\tau_m + \tau_f}{I} + \frac{Mg\sin\theta}{I} \\
-\dot{\phi} \\
-\frac{(\tau_m - \tau_f)(I + I_w)}{IIw} - \frac{Mg \sin\theta}{I}
-\end{bmatrix}
-\]
-\end{center}
-Linearizing this system, we get:
 \begin{center}  
   \[
 \frac{d}{dt}
@@ -288,6 +273,42 @@ Linearizing this system, we get:
 (\tau_m - \tau_f)
 \]
 \end{center}
+
+We begin the analysis by checking the controllability of the linearized dynamics. It is very probable
+because one control torque is supposed to regulate four state variables. Controllability can determined
+by the rank of Kalman matrix C.
+
+\end{tcolorbox}
+
+
+
+
+    \item There exists a neighborhood \( \mathcal{N} \) of \( (x_0, 0) \) such that for each \( \zeta \in \mathcal{N} \), there exists a control \( u_\zeta(\cdot) \) defined on \( [0, \infty) \) such that this control steers the solution of \( \dot{x} = f(x, u_\zeta) \) from \( x = \zeta \) at \( t = 0 \) to \( x = x_0 \) at \( t \to \infty \).
+    
+    \item The mapping \( \gamma : A \times \mathbb{R}^m \to \mathbb{R}^n \), defined by \( \gamma : (x, u) \to f(x, u) \), should be onto an open set containing 0 .
+\end{enumerate}
+
+Now, for the first condition , starting from the state space/first order form:
+\begin{center}
+  \[
+\frac{d}{dt}
+\begin{bmatrix}
+\theta \\
+\dot{\theta} \\
+\phi \\
+\dot{\phi} 
+\end{bmatrix}
+=
+\begin{bmatrix}
+\dot{\theta} \\
+\frac{-\tau_m + \tau_f}{I} + \frac{Mg\sin\theta}{I} \\
+\dot{\phi} \\
+\frac{(\tau_m - \tau_f)(I + I_w)}{IIw} - \frac{Mg \sin\theta}{I}
+\end{bmatrix}
+\]
+\end{center}
+Linearizing this system, we get:
+
 Now, the characteristic equation of this system is given by:
 \begin{center}
 \[
@@ -568,6 +589,146 @@ This yields a linear approximation:
 The region of attraction of such a linear system can be bounded using a Lyapunov function or by simulating trajectories from various initial conditions and checking for convergence. In practice, a reasonable conservative estimate is to select $\theta_{\text{th}}$ such that $|\theta| < \theta_{\text{max}}$ and $|\dot{\theta}| < \dot{\theta}_{\text{max}}$, where $\theta_{\text{max}}$ and $\dot{\theta}_{\text{max}}$ are chosen so that the linear controller performs well within this domain.
 
 These values will be determined by analyzing the eigenvalues of the linearized system matrix to determine bounds for stability and validated using simulations (i.e. sweep through $(\theta, \dot{\theta})$ values and check convergence). This approach provides a more design-based method for selecting switching thresholds rather than relying purely on trial and error.
+
+\section{Learning Based Control (Experiments)}
+In this section, we seek to implement a neural network based controller for swing up and stabilization of the reaction wheel pendulum. Since, the wheel angle 
+doesn't really play a significant role in evolving dynamics of the reaction wheel pendulum, only the three states of pendulum angle , pendulum velocity and wheel velocity is
+taken as input to the network which outputs a control value.
+
+\subsection{Data Generation from NMPC}
+The goal of our learning based Controller is to swing up and stabilize the system. However, the data that we seek to train our network is based on trajectories for finite time 
+which is obtained as a minimization of the cost function. So, for this instance , a few techniques were implemented to see if we could make a pure behavior cloning
+neural network swing up and stabilize it(somewhat of workaround methods).
+\newline
+
+
+In NMPC, the controller solves a nonlinear program at each sampling step. The optimal
+control sequence is computed over the prediction horizon, but only the first control
+input is applied to the system, following the receding-horizon principle. The entire
+procedure is repeated at the next sampling instant with the newly measured state.
+
+Consider the nonlinear dynamical system
+\begin{equation}
+    \dot{x}(t) = f(x(t), u(t)),
+\end{equation}
+with state vector
+\[
+x = 
+\begin{bmatrix}
+    \theta \\
+    \dot{\theta} \\
+    \phi \\
+    \dot{\phi}
+\end{bmatrix},
+\]
+and control input
+\[
+u = \tau \quad \text{(torque)}.
+\]
+The state and control are subject to constraints
+\begin{align}
+    x_{\min} \;\le\; x(t) \;\le\; x_{\max}, \\
+    u_{\min} \;\le\; u(t) \;\le\; u_{\max},
+\end{align}
+where $x_{\min}, x_{\max}$ and $u_{\min}, u_{\max}$ denote the admissible bounds on the state and control, respectively.\newline
+After discretization using a sampling period $T_s$, the system evolves according to
+\begin{equation}
+    x_{k+1} = F(x_k, u_k), \qquad k = 0,1,\dots,N-1,
+\end{equation}
+with the discrete-time constraints
+\begin{align}
+    x_{\min} \;\le\; x_k \;\le\; x_{\max}, \\
+    u_{\min} \;\le\; u_k \;\le\; u_{\max},
+\end{align}
+where $F(\cdot)$ denotes the discretized nonlinear dynamics.
+
+% \paragraph{Reference angular velocity.}
+% The wheel-speed reference signal is defined as
+% \begin{equation}
+%     \omega_{\mathrm{ref}}(t) = \omega_s + 24.76 \sin\!\left(78.54\, t_{\mathrm{abs}} - 1.57\right),
+% \end{equation}
+% with the steady-state reference value $\omega_s = 0$.  
+% (Only $\omega_s$ is used in the current cost formulation.)
+
+
+\subsubsection*{NMPC Optimization Problem}
+\vspace{0.2cm}
+
+At each sampling instant, given the current state $x_0 = x_{\mathrm{meas}}$, the NMPC solves the constrained finite-horizon problem
+\begin{align}
+    \min_{\{u_k\}_{k=0}^{N-1}} \quad
+        J &= m(x_N) + \sum_{k=0}^{N-1} \ell(x_k, u_k), \\[6pt]
+    \text{s.t.} \qquad
+        x_{k+1} &= F(x_k, u_k), \qquad k = 0,\dots,N-1, \\
+        u_{min} \;\le\; u_k &\le\; u_{max}, \qquad k = 0,\dots,N-1.
+\end{align}
+
+Only the first optimal control action $u_0^\star$ is applied to the system, and the optimization is repeated at the next sampling step, following the receding-horizon principle.
+
+
+
+\subsubsection*{Objective Function}
+For our problem setup of Non-linear MPC, from our dynamics from Eqn. (\ref{firstorderform}) , We set the friction torque equal to 0 and consider $\tau_m$ to be equal to $u$ as the control input.
+Also, the wheel angle term is not included in the cost function as it's not to be minimized nor to be used as a reference for control.
+
+\\For our system,
+
+Define the terminal (Mayer) cost
+\begin{equation}
+    m(x_N) = Q_1 \theta_N^2 
+           + Q_2 \dot{\theta}_N^2 
+           + Q_3 \left(\dot{\phi}_N - \omega_s\right)^2,
+\end{equation}
+and the stage (Lagrange) cost
+\begin{equation}
+    \ell(x_k, u_k)
+    = Q_1 \theta_k^2 
+    + Q_2 \dot{\theta}_k^2 
+    + Q_3 \left(\dot{\phi}_k - \omega_s\right)^2
+    + R u_k^2,
+\end{equation}
+with weighting parameters chosen as
+\[
+Q_1 = 1000, \qquad Q_2 = 5, \qquad Q_3 = 1, \qquad R = 1.
+\]
+
+Closed Loop trajectories obtained from the solution of this NMPC problem , were used as dataset for training the neural network.
+
+\begin{tcolorbox}[colback=gray!10, colframe=gray!50, boxrule=0.5pt, arc=0pt, left=4pt, right=4pt, top=4pt, bottom=4pt]
+In this Setup, we are attempting to train a neural network that infinitely stabilizes a system based on a dataset and for our specific problem , the control input 
+slowly diminishes to zero while the pendulum attempts to reach the upright position , to counteract this in an attempt to let the pendulum overshoot the upright position and  
+and let it balance there , by considering the specific dynamics of our system from Eqn.(\ref{eqn_tempw}) , I introduce a time varying tracking reference to the wheel in the objective function so that
+it would force somewhat of a bang bang behavior around upright.\\
+For that , we design the wheel velocity reference such that
+\[
+w_{\text{ref}} = A \cdot \sin(bt + \alpha)
+\]
+We want this to fluctuate between -A to +A in each time step in NMPC trajectory generation which creates the oscillatory behavior, For that we simply 
+solve the linear equations of 
+\[
+\begin{aligned}
+b \cdot t_{\text{step}} + \alpha &= \frac{\pi}{2} \\
+b \cdot 2 t_{\text{step}} + \alpha &= \frac{3 \pi}{2}
+\end{aligned}
+\]
+Further, we wish to choose the value of A such that it only results in say x\% of maximum possible control.
+To determine the magnitude A , using Eqn.(\ref{eqn_tempw}) and substituting \tilde{u} to be x\% of maximum control limit and letting \ddot{theta} equal to 0 around the upright
+\[
+I_w \frac{2A}{t_{\text{step}}} = u
+\]
+
+However, performing the experiments with this , the swingup and stabilization is performed neatly but the wheel velocity slowly drifts higher and higher 
+leading to actuator saturation. Instead of this exact design , when I did try it with wheel velocity fluctuating around some value $w_s$ it did show the 
+behavior of balancing with the wheel velocity settling to a fixed value but it suffered from the problem of distributional shift and only worked with either just positive angles only
+or negative angles only. This wasn't pursued any further.
+\end{tcolorbox}
+
+\subsection{Behavior Cloning Controller}
+
+The network maps the current state of the system to a control action by passing the input through two hidden layers of 64 neurons each, 
+using ReLU activations, and outputs a single control value which is based on supervised loss.
+
+
 
 \bibliographystyle{plain}
 \bibliography{references}

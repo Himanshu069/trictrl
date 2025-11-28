@@ -8,4 +8,7 @@
 \contentsline {subsection}{\numberline {3.2}Stabilizer}{7}{subsection.3.2}%
 \contentsline {subsection}{\numberline {3.3}Swing-up controller}{9}{subsection.3.3}%
 \contentsline {subsubsection}{\numberline {3.3.1}Determination of the wheel's speed for swing-up}{10}{subsubsection.3.3.1}%
-\contentsline {subsubsection}{\numberline {3.3.2}Determination of switching thresholds}{11}{subsubsection.3.3.2}%
+\contentsline {subsubsection}{\numberline {3.3.2}Determination of switching thresholds}{12}{subsubsection.3.3.2}%
+\contentsline {section}{\numberline {4}Learning Based Control (Experiments)}{13}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Data Generation from NMPC}{13}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Behavior Cloning Controller}{14}{subsection.4.2}%
