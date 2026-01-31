@@ -365,81 +365,186 @@ Hence, the co-domain of the function is not equal to the range and the function 
 violation of the Brockett's necessary condition and thus a single continuously differentiable control law cannot stabilize the system.
 
 \end{tcolorbox}
+\subsection{Passivity Property of the System}
 
-\subsection{Stabilizer}
+The total energy of the Triangle system, which consists of the pendulum body and the wheel, is the sum of its kinetic and potential energies:
+\begin{equation}
+E = T + V
+\end{equation}
+where the kinetic energy is
+\begin{equation}
+T = \frac{1}{2} (I_b + m_b l_b^2 + I_w + m_w l_w^2) \dot{\theta}^2 
+    + I_w \dot{\theta} \dot{\phi} 
+    + \frac{1}{2} I_w \dot{\phi}^2,
+\end{equation}
+and the potential energy due to gravity is
+\begin{equation}
+V = - M g \cos\theta, \quad M = m_b l_b + m_w l_w.
+\end{equation}
+
+Thus, the total energy can be written explicitly as
+\begin{equation}
+E = \frac{1}{2} (I_b + m_b l_b^2 + I_w + m_w l_w^2) \dot{\theta}^2 
+    + I_w \dot{\theta} \dot{\phi} 
+    + \frac{1}{2} I_w \dot{\phi}^2 
+    - M g \cos\theta.
+\end{equation}
+
+Taking the time derivative of the total energy, we obtain
+\begin{equation}
+\dot{E} = (I_b + m_b l_b^2 + I_w + m_w l_w^2) \dot{\theta} \ddot{\theta} 
+         + I_w (\dot{\theta} \ddot{\phi} + \dot{\phi} \ddot{\theta}) 
+         + I_w \dot{\phi} \ddot{\phi} 
+         + M g \sin\theta \, \dot{\theta}.
+\end{equation}
+
+Substituting the Euler-Lagrange equations of motion for the system from Eqn.(\ref{eqn_eomb}) and Eqn.(\ref{eqn_eomw}).
+\begin{equation}
+\dot{E} = \dot{\phi} \, \tau_m.
+\label{eq:passiv}
+\end{equation}
+
+We have also considered the absence of friction torque $\tau_f$ and $\tau$ is equal to $\tau_m$ for the following sections.
+This expression shows that the rate of change of total energy is equal to the power supplied by the motor torque, and therefore the system satisfies the \textbf{passivity property}.
+
+
+\subsection{Energy Based Swing-Up Controller}
 
 \subsubsection*{Lyapunov function}
 
-Since we are interested only on $\theta$,  $\dot{\theta}$, and $\dot{\varphi}$, we design an energy like Lyapunov function
 
+
+The Lyapunov candidate function is defined as
 \begin{equation}
-  V = \frac{1}{2} I \dot{\theta}^2 + Mg (- \cos\theta) + \frac{1}{2} k_1 \dot{\varphi}^2, \quad k_1 > 0
+V = \frac{1}{2} k_E E^2 + \frac{1}{2} k_v \dot{\phi}^2 + \frac{1}{2} k_p \phi^2
+\label{eq:lyapunov}
 \end{equation}
 
-where the first two terms represents the mechanical energy of robot body. We synthesize the third, wheel damping, term as we are interested in the angular rate of the wheel as well. The term $k_{1}$ represents the magnitude of damping. It should be noted that we do not require custom gains on other terms ($I$, $M$, $g$, and $L$) because they are provided by physics and system parameters.
+Taking the time derivative of $V$,
+\begin{equation}
+\dot{V} = k_E E \dot{E} + k_v \dot{\phi} \ddot{\phi} + k_p \phi \dot{\phi}
+\label{eq:vdot}
+\end{equation}
 
-Following the steps of Lyapunov analysis, now we compute the time derivative $V$, and plug in the expressions from the equations of motion Eqn.(\ref{eqn_eomb}) and Eqn.(\ref{eqn_eomw}).
+Using the relation from passivity property in eqn. (\ref{eq:passiv}) we obtain
+\begin{equation}
+\dot{V} = k_E E \tau \dot{\phi}
++ k_v \dot{\phi} \ddot{\phi}
++ k_p \phi \dot{\phi}
+\label{eq:vdot_sub}
+\end{equation}
+
+\begin{equation}
+\dot{V} =
+\dot{\phi}
+\left(
+k_E E \tau + k_v \ddot{\phi} + k_p \phi
+\right)
+\label{eq:vdot_factored}
+\end{equation}
+
+Using the system dynamics given by Eqn.(\ref{eqn_eomb}) and Eqn.(\ref{eqn_eomw}), we get
+
 
 \begin{align}
-  \dot{V} &= I \dot{\theta} \ddot{\theta} + Mg \dot{\theta} \sin\theta + k_1 \dot{\varphi} \ddot{\varphi} \nonumber \\
-          &= \dot{\theta}(2Mg \sin\theta - \tau_m) + k_1 \dot{\varphi}\left(\frac{(I + I_w)}{I I_w}\tau_m - \frac{Mg \sin\theta}{I}\right)
-  \label{eqn_vdot}
+\dot{V} &=
+\dot{\phi}
+\Bigg[
+k_E E \tau
++ k_v \tau \left( \frac{I + I_w}{I I_w} \right)
+- k_v \frac{m g l}{I} \sin\phi
++ k_p \phi
+\Bigg]
+\label{eq:vdot_expanded}
 \end{align}
 
-We now, \textit{search for} the control law forces $\dot{V}$ to be negative semi-definite i.e. $\dot{V}\leq0$.
-
+Let,
 \begin{equation}
-  \tau_m = 2Mg \sin\theta + k_2 \dot{\theta} - \tau_{f}- k_1 \frac{(I + I_w)}{I I_w} \dot{\varphi}
-  \label{eqn_ctrl}
+k_1 &= k_v \frac{I + I_w}{I I_w},
+\qquad
+k_2 &= k_v \frac{m g l}{I}
+\label{eq:lumped_constants}
 \end{equation}
 
-Plugging in the expression of control torque into Eqn.{\ref{eqn_vdot}} to make sure if is $\dot{V}$ indeed negative semi-definite.
-
 \begin{equation}
-  \dot{V} = -k_2 \dot{\theta}^2 - k_1 \frac{(I + I_w)^2}{I^2 I_w^2} \dot{\varphi}^2 \leq 0
+\dot{V} =
+\dot{\phi}
+\left[
+\tau (k_E E + k_1)
+- k_2 \sin\phi
++ k_p \phi
+\right]
+\label{eq:vdot_rearranged}
+\end{equation}
+\subsection*{Control Design}
+
+Assume the control input satisfies
+\begin{equation}
+\tau (k_E E + k_1)
+- k_2 \sin\phi
++ k_p \phi
+= -k_d \dot{\phi}
+\label{eq:assumption}
 \end{equation}
 
-When $\dot{V}$ is negative semi-definite, we ask LaSalle for help!
-\subsubsection*{LaSalle's invariance principle}
+Then the Lyapunov derivative becomes
+\begin{equation}
+\dot{V} = -k_d \dot{\phi}^2
+\label{eq:vdot_negative}
+\end{equation}
 
-LaSalle's principle requires finding the largest invariant set where $\dot{V} = 0$:
+which is negative semi-definite.
 
-\begin{enumerate}
-  \item From \eqref{eqn_vdot}, $\dot{V} = 0$ implies $\dot{\theta} = 0$ and $\dot{\varphi} = 0$
+Solving \eqref{eq:assumption} for $\tau$, the control law is obtained as
+\begin{equation}
+\tau =
+\frac{
+- k_d \dot{\phi}
+- k_p \phi
++ k_2 \sin\phi
+}{
+k_E E + k_1
+}
+\label{eq:control_law}
+\end{equation}
 
-  \item Substituting $\dot{\theta} = \dot{\varphi} = 0$ into \eqref{eqn_eomb} and \eqref{eqn_eomw}:
-  \begin{align}
-    0 &= Mg\sin\theta - \tau_m \label{eq:theta_eq} \\
-    0 &= \frac{(I + I_w)\tau_m}{I I_w} - \frac{Mg\sin\theta}{I} \label{eq:phi_eq}
-  \end{align}
+For the case $\dot{V} = 0$, LaSalle's invariance principle is invoked to analyze the asymptotic behavior of the system.
 
-  \item Substituting the control law \eqref{eqn_ctrl} with $\dot{\theta} = \dot{\varphi} = 0$:
-  \begin{equation}
-    \tau_m = 2Mg\sin\theta
-  \end{equation}
 
-  \item Combining with \eqref{eq:theta_eq}:
-  \begin{equation}
-      Mg\sin\theta = 2Mg\sin\theta \implies \sin\theta = 0
-  \end{equation}
-\end{enumerate}
+\subsection*{LaSalle's Invariance Principle Analysis}
 
-The only invariant solutions are:
-\begin{enumerate}
-  \item$\theta=0,\dot{\theta}=0,\dot{\varphi}=0$ (desired upright equilibrium)
-  \item$\theta=\pi,\dot{\theta}=0,\dot{\varphi}=0$ (unstable downward position)
-\end{enumerate}
+The Lyapunov derivative satisfies
+\begin{equation}
+\dot{V} = -k_d \dot{\phi}^2 \leq 0 .
+\end{equation}
+Hence, $V(t)$ is non-increasing and all closed-loop trajectories are bounded.
 
-Since $V$ is radially unbounded and the downward position is unstable, all trajectories converge to the upright equilibrium $(\theta, \dot{\theta}, \dot{\varphi}) = (0, 0, 0)$.
+Define a compact, positively invariant set $\Omega$ such that all trajectories evolve in $\Omega$. Let
+\begin{equation}
+\mathcal{I} = \{ x \in \Omega \mid \dot{V}(x) = 0 \}.
+\end{equation}
+
+From $\dot{V} = -k_d \dot{\phi}^2$, it follows that
+\[
+\mathcal{I} = \{ x \in \Omega \mid \dot{\phi} = 0 \}.
+\]
+
+Let $\mathcal{M}$ denote the largest invariant set contained in $\mathcal{I}$.  
+By LaSalle's invariance principle, every closed-loop trajectory starting in $\Omega$ approaches $\mathcal{M}$ as $t \to \infty$.
+
+In the set $\mathcal{I}$, $\dot{\phi} = 0$ and therefore $\phi$ is constant. Since
+\[
+\dot{E} = \tau \dot{\phi},
+\]
+the energy $E$ is also constant on $\mathcal{I}$.
+
+Consequently, all system trajectories converge to the largest invariant set $\mathcal{M} \subseteq \{ \dot{\phi} = 0 \}$.
+
 
 \subsubsection*{The stabilizer control law}
 
-Our controller, in nonlinear form, as expressed in Eqn.(\ref{eqn_ctrl}) is
-\begin{equation*}
-  \tau_m=2Mg\sin\theta+k_{2}\dot{\theta}-\tau_{f}-k_1\frac{(I+I_w)}{II_w}\dot{\varphi}
-\end{equation*}
 
-The first term compensates gravity, second damps the robot velocity, third compensates friction, and the last damps the wheel velocity. If we are near the equilibrium angle, then gravity compensation can be considered linear with the approximation $\sin\theta\approx\theta$ which linearizes the control law to be
+For our stabilizer control law, first term compensates gravity, second damps the robot velocity, third compensates friction, and the last damps the wheel velocity. If we are near the equilibrium angle, then gravity compensation can be considered linear with the approximation $\sin\theta\approx\theta$ which linearizes the control law to be
 \begin{equation}
   \tau_m=k_{p}\theta+k_d\dot{\theta}+k_{w}\dot{\varphi}-\tau_{f}.
 \end{equation}
@@ -451,7 +556,7 @@ This requires us to determine the friction of the motor. However, the classic ac
 
 where, $k_{p}=2Mg$, $k_{d}=k_{2}$, and $k_{w}=-k_{1}(I+I_w)/(II_{w})$.
 
-\subsection{Swing-up controller}
+\subsection{Another Swing-up controller}
 
 The goal of the swing-up controller is to “wake up” the \textit{Triangle} from its stable equilibrium and bring it closer to the upright position, enabling the stabilizer to take over and perform the actual balancing. In this section, we discuss and design the swing-up controller, beginning with physical intuition and mathematical analysis to identify key parameters.
 

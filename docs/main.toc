@@ -5,10 +5,11 @@
 \contentsline {subsection}{\numberline {2.3}First order form}{6}{subsection.2.3}%
 \contentsline {section}{\numberline {3}Stability analysis and controller design}{6}{section.3}%
 \contentsline {subsection}{\numberline {3.1}A global asymptotic controller}{6}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Stabilizer}{7}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Swing-up controller}{9}{subsection.3.3}%
-\contentsline {subsubsection}{\numberline {3.3.1}Determination of the wheel's speed for swing-up}{10}{subsubsection.3.3.1}%
-\contentsline {subsubsection}{\numberline {3.3.2}Determination of switching thresholds}{12}{subsubsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.2}Passivity Property of the System}{7}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Energy Based Swing-Up Controller}{8}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Another Swing-up controller}{10}{subsection.3.4}%
+\contentsline {subsubsection}{\numberline {3.4.1}Determination of the wheel's speed for swing-up}{11}{subsubsection.3.4.1}%
+\contentsline {subsubsection}{\numberline {3.4.2}Determination of switching thresholds}{12}{subsubsection.3.4.2}%
 \contentsline {section}{\numberline {4}Learning Based Control (Experiments)}{13}{section.4}%
 \contentsline {subsection}{\numberline {4.1}Data Generation from NMPC}{13}{subsection.4.1}%
 \contentsline {subsection}{\numberline {4.2}Imitation Learning Approaches}{15}{subsection.4.2}%
