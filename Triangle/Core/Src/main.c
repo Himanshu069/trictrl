@@ -2,17 +2,7 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
+  * @brief          : Main program body with step diagnostics
   ******************************************************************************
   */
 /* USER CODE END Header */
@@ -28,124 +18,213 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h> 
-#include <mpu_6050.h>
+#include "mpu_6050.h"
 /* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint32_t encoder = 0 ; 
-float phi_dot = 0.0f;
+uint32_t encoder = 0; 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 #define ENCODER_CPR 400
-uint16_t motor_duty =  0;
+uint16_t motor_duty = 0;
 float get_motor_speed(void);
 volatile float motor_speed_rpm;
+
+// --- GLOBAL TRACKING VARIABLES FOR CUBEMONITOR ---
+float phi_dot = 0.0f;
+float theta = 0.0f;
+float phi = 0.0f;
+float sandeep = 0.0f;
+float thetadot = 0.0f;
+float accel[3] = {0.0f, 0.0f, 0.0f};
+float gyro[3] = {0.0f, 0.0f, 0.0f};
+
+// --- VISUAL SOFTWARE DIAGNOSTIC FLAG ---
+// Starts at 99. Progresses through 10-60 during peripheral init. 
+// Becomes 1 after hardware passes, 2 after I2C init, 3 inside main loop.
+volatile uint8_t debug_step = 99; 
+
+// Simple delay function for clock frequency matching in software I2C
+static void I2C_Delay(void) {
+    for (volatile int i = 0; i < 500; i++);
+}
+
+// ---------- SOFTWARE BIT-BANG I2C PROTOCOL FUNCTIONS ----------
+void I2C_Start(void) {
+    SDA_HIGH(); SCL_HIGH(); I2C_Delay();
+    SDA_LOW();  I2C_Delay();
+    SCL_LOW();  I2C_Delay();
+}
+
+void I2C_Stop(void) {
+    SDA_LOW(); SCL_HIGH(); I2C_Delay();
+    SDA_HIGH(); I2C_Delay();
+}
+
+uint8_t I2C_WriteByte(uint8_t data) {
+    for (int i = 0; i < 8; i++) {
+        if (data & 0x80) SDA_HIGH(); else SDA_LOW();
+        data <<= 1;
+        SCL_HIGH(); I2C_Delay();
+        SCL_LOW();  I2C_Delay();
+    }
+    SDA_HIGH(); 
+    SCL_HIGH(); I2C_Delay();
+    uint8_t ack = SDA_READ();
+    SCL_LOW(); I2C_Delay();
+    return ack; 
+}
+
+uint8_t I2C_ReadByte(uint8_t ack) {
+    uint8_t data = 0;
+    SDA_HIGH(); 
+    for (int i = 0; i < 8; i++) {
+        data <<= 1;
+        SCL_HIGH(); I2C_Delay();
+        if (SDA_READ()) data |= 1;
+        SCL_LOW(); I2C_Delay();
+    }
+    if (ack) SDA_LOW(); else SDA_HIGH();
+    SCL_HIGH(); I2C_Delay();
+    SCL_LOW();  I2C_Delay();
+    SDA_HIGH(); 
+    return data;
+}
+
+// ---------- MPU6050 HARDWARE FUNCTIONS ----------
+void MPU6050_Init(void) {
+    I2C_Start();
+    I2C_WriteByte(MPU_ADDR << 1 | 0); 
+    I2C_WriteByte(0x6B);              
+    I2C_WriteByte(0x00);              
+    I2C_Stop();
+}
+
+uint8_t MPU6050_ReadByte(uint8_t reg) {
+    uint8_t data;
+    I2C_Start();
+    I2C_WriteByte(MPU_ADDR << 1 | 0); 
+    I2C_WriteByte(reg);
+    I2C_Start();
+    I2C_WriteByte(MPU_ADDR << 1 | 1); 
+    data = I2C_ReadByte(0);           
+    I2C_Stop();
+    return data;
+}
+
+void MPU6050_ReadData(float* accel_ms2, float* gyro_dps) {
+    uint8_t buffer[14];
+    int16_t accel_raw[3], gyro_raw[3];
+
+    I2C_Start();
+    I2C_WriteByte(MPU_ADDR << 1 | 0);
+    I2C_WriteByte(0x3B);              
+    I2C_Start();
+    I2C_WriteByte(MPU_ADDR << 1 | 1);
+
+    for (int i = 0; i < 13; i++) buffer[i] = I2C_ReadByte(1); 
+    buffer[13] = I2C_ReadByte(0);     
+    I2C_Stop();
+
+    accel_raw[0] = (buffer[0] << 8)  | buffer[1];
+    accel_raw[1] = (buffer[2] << 8)  | buffer[3];
+    accel_raw[2] = (buffer[4] << 8)  | buffer[5];
+    gyro_raw[0]  = (buffer[8] << 8)  | buffer[9];
+    gyro_raw[1]  = (buffer[10] << 8) | buffer[11];
+    gyro_raw[2]  = (buffer[12] << 8) | buffer[13];
+
+    for(int i = 0; i < 3; i++){
+        accel_ms2[i] = ((float)accel_raw[i] / 16384.0f); 
+        gyro_dps[i]  = (float)gyro_raw[i] / 131.0f;       
+    }
+}
 /* USER CODE END 0 */
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
-
-  /* USER CODE BEGIN 1 */
-  // setup();
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
+  // --- STEP DIAGNOSTICS FOR INITIALIZATION BREAKPOINTS ---
+  debug_step = 10; 
   MX_GPIO_Init();
+  
+  debug_step = 20; 
   MX_DMA_Init();
+  
+  debug_step = 30; 
   MX_USART2_UART_Init();
+  
+  debug_step = 40; 
   MX_USART1_UART_Init();
+  
+  debug_step = 50; // If stuck on 50, Timer 4 (Encoder input) is freezing
   MX_TIM4_Init();
+  
+  debug_step = 60; // If stuck on 60, Timer 1 (PWM output) is freezing
   MX_TIM1_Init();
+
   /* USER CODE BEGIN 2 */
+  debug_step = 1; // Milestone 1: Reached after passing all native peripheral initializations
+  HAL_Delay(100);
+
+  // --- BIT-BANG GPIO LAYOUT ALIGNMENT (PB0 = SCL, PB1 = SDA) ---
+  __HAL_RCC_GPIOB_CLK_ENABLE(); 
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1; 
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;    
+  GPIO_InitStruct.Pull = GPIO_PULLUP;           
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;  
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+  HAL_Delay(50); 
+
   HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+  
   MPU6050_Init();
+  
+  debug_step = 2; // Milestone 2: Woke up sensor over software I2C channels safely!
+  HAL_Delay(100);
+
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  // char buf[32];
   char buffer[512];
-  float accel[3], gyro[3]; 
   motor_duty = 0.5;
 
   while (1)
   {
-      // HAL_UART_Transmit(&huart2, (uint8_t *)msg, sizeof(msg), 1000);
+      debug_step = 3; // Milestone 3: Actively processing loops
+      
       encoder = __HAL_TIM_GET_COUNTER(&htim4);    
-      // int len = sprintf(buf, "Received Value: %lu\r\n", encoder); 
-      // HAL_UART_Transmit(&huart1, (uint8_t *)buf, len, 1000);
-
       MPU6050_ReadData(accel, gyro);
 
-      // sprintf(buffer, "AX:%f AY:%f AZ:%f GX:%f GY:%f GZ:%f\r\n",
-      //           accel[0], accel[1], accel[2],
-      //           gyro[0], gyro[1], gyro[2]);
-      
-      uint8_t id = MPU6050_ReadByte(0x75);
+
+      sandeep += 10; 
+      uint8_t id = MPU6050_ReadByte(0x75); 
       sprintf(buffer, "WHO_AM_I = 0x%02X\r\n", id);
       HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
-      float gx_rad = gyro[0] * (M_PI / 180.0f);
-      float theta = atan2(accel[1],accel[2]) * 180.0f / M_PI ;
-      float phi = encoder * 2.0f * M_PI/ENCODER_CPR;
+      
+      thetadot = gyro[0] * (M_PI / 180.0f); 
+      theta = atan2(accel[1], accel[2]) * 180.0f / M_PI; 
+      phi = encoder * 2.0f * M_PI / ENCODER_CPR; 
       phi_dot = get_motor_speed();
+      
       snprintf(buffer, sizeof(buffer),
             "AX:%d AY:%d AZ:%d GX:%d GY:%d GZ:%d theta : %f thetadot: %f phi : %f phi_dot : %f\r\n",
             (int)(accel[0]*1000), (int)(accel[1]*1000), (int)(accel[2]*1000),
-            (int)(gyro[0]*100), (int)(gyro[1]*100), (int)(gyro[2]*100), theta, gx_rad, phi, phi_dot) ;
+            (int)(gyro[0]*100), (int)(gyro[1]*100), (int)(gyro[2]*100), theta, thetadot, phi, phi_dot);
+      
       HAL_UART_Transmit(&huart1, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+      
       htim1.Instance->CCR1 = (uint32_t)(motor_duty * htim1.Instance->ARR);     
       HAL_Delay(10);  
-      // encoder = __HAL_TIM_GET_COUNTER(&htim2);
 
     /* USER CODE END WHILE */
 
@@ -154,18 +233,11 @@ int main(void)
   /* USER CODE END 3 */
 }
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
@@ -178,8 +250,6 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
@@ -203,40 +273,16 @@ float get_motor_speed() {
 
     uint32_t now_time = HAL_GetTick(); 
     float dt = (now_time - prev_time) / 1000.0f;  
+    
+    if(dt == 0) dt = 0.001f; 
+    
     prev_time = now_time;
-
-    return ((float)delta / ENCODER_CPR) * 2.0f * M_PI / dt; // rad/s
+    return ((float)delta / ENCODER_CPR) * 2.0f * M_PI / dt; 
 }
 /* USER CODE END 4 */
 
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
 void Error_Handler(void)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1)
-  {
-  }
-  /* USER CODE END Error_Handler_Debug */
+  while (1) {}
 }
-
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
