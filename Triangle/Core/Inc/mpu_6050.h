@@ -1,35 +1,31 @@
-#ifndef MPU6050_H
-#define MPU6050_H
+#ifndef MPU_6050_H
+#define MPU_6050_H
 
-#include "stm32f1xx_hal.h"   // Change to your MCU's HAL include
+#include "main.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// I2C pins (bit-banged)
-#define SDA_HIGH() HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET)
-#define SDA_LOW()  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET)
-#define SCL_HIGH() HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET)
-#define SCL_LOW()  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET)
-#define SDA_READ() HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0)
-
-// MPU6050 I2C address
+/* ============================================================
+ * MPU6050 I2C ADDRESS
+ * AD0 pin grounded → 0x68
+ * AD0 pin to VCC   → 0x69
+ * ============================================================ */
 #define MPU_ADDR 0x68
 
-// I2C functions
-void I2C_Start(void);
-void I2C_Stop(void);
-uint8_t I2C_WriteByte(uint8_t data);
-uint8_t I2C_ReadByte(uint8_t ack);
+/* ============================================================
+ * SOFTWARE BIT-BANG I2C PIN MAPPING
+ * Custom PCB: PB0 = SCL, PB1 = SDA
+ * Uses STM32 atomic BSRR/BRR registers for maximum toggle speed.
+ * ============================================================ */
+#define SCL_HIGH()  (GPIOB->BSRR = GPIO_PIN_0)            /* PB0 → High */
+#define SCL_LOW()   (GPIOB->BRR  = GPIO_PIN_0)            /* PB0 → Low  */
+#define SDA_HIGH()  (GPIOB->BSRR = GPIO_PIN_1)            /* PB1 → High */
+#define SDA_LOW()   (GPIOB->BRR  = GPIO_PIN_1)            /* PB1 → Low  */
+#define SDA_READ()  ((GPIOB->IDR & GPIO_PIN_1) ? 1 : 0)   /* Read PB1   */
 
-// MPU6050 functions
-void MPU6050_Init(void);
+/* ============================================================
+ * DRIVER FUNCTION PROTOTYPES
+ * ============================================================ */
+void    MPU6050_Init(void);
 uint8_t MPU6050_ReadByte(uint8_t reg);
-void MPU6050_ReadData(float* accel, float* gyro);
+void    MPU6050_ReadData(float *accel_ms2, float *gyro_dps);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif /* MPU_6050_H */
